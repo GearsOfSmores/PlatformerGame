@@ -35,7 +35,7 @@ public class Health : MonoBehaviour
         if (transform.position.y < -15)
         {
 
-            SceneManager.LoadScene("LoseScreen");
+            SceneManager.LoadScene("OpeningScene");
         }
     }
     public void TakeDamage(float _damage)
@@ -55,7 +55,7 @@ public class Health : MonoBehaviour
                 anim.SetTrigger("die");
                 GetComponent<PlayerMovement>().enabled = false;
                 dead = true;
-                SceneManager.LoadScene("LoseScreen");
+                SceneManager.LoadScene("OpeningScene");
             }
 
             

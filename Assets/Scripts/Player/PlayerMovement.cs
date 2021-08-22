@@ -19,12 +19,16 @@ public class PlayerMovement : MonoBehaviour
     public Animator animator;
     public LayerMask groundLayer;
     public GameObject characterHolder;
+    public BoxCollider2D regularColli;
+    public BoxCollider2D slideColli;
 
     [Header("Physics")]
     public float maxSpeed = 7f;
     public float linearDrag = 4f;
     public float gravity = 1f;
     public float fallMultiplier = 5f;
+    public float slideSpeed = 5f;
+    public bool isSliding = false;
 
     [Header("Collision")]
     public bool onGround = false;
@@ -34,7 +38,7 @@ public class PlayerMovement : MonoBehaviour
     private SpriteRenderer spriteRend;
     // Update is called once per frame
 
-
+    
     private void Awake()
     {
         spriteRend = GetComponent<SpriteRenderer>();
@@ -42,7 +46,7 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         bool wasOnGround = onGround;
-        onGround = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer) || Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
+        onGround = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer); ///|| Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
 
         if (!wasOnGround && onGround)
         {
@@ -56,6 +60,10 @@ public class PlayerMovement : MonoBehaviour
 
         direction = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            preformSlide();
+        }
     }
     void FixedUpdate()
     {
@@ -66,6 +74,16 @@ public class PlayerMovement : MonoBehaviour
         }
 
         modifyPhysics();
+    }
+    public void preformSlide()
+    {
+        isSliding = true;
+        animator.SetBool("slide", true);
+       // regularColli.enabled = false;
+       // slideColli.enabled = true;
+        
+        StartCoroutine("stopSlide");
+        
     }
     void moveCharacter(float horizontal)
     {
@@ -125,6 +143,28 @@ public class PlayerMovement : MonoBehaviour
         facingRight = !facingRight;
         transform.rotation = Quaternion.Euler(0, facingRight ? 0 : 180, 0);
     }
+
+    IEnumerator stopSlide()
+    {
+        if (Input.GetButton("Jump"))
+        {
+            animator.SetBool("slide", false);
+            isSliding = false;
+        }
+        else
+        {
+
+            yield return new WaitForSeconds(0.8f);
+            animator.Play("Idle");
+            animator.SetBool("slide", false);
+            // regularColli.enabled = true;
+            // slideColli.enabled = false;
+            isSliding = false;
+        }
+         
+
+
+    }
     IEnumerator JumpSqueeze(float xSqueeze, float ySqueeze, float seconds)
     {
         Vector3 originalSize = Vector3.one;
@@ -149,7 +189,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(transform.position + colliderOffset, transform.position + colliderOffset + Vector3.down * groundLength);
-        Gizmos.DrawLine(transform.position - colliderOffset, transform.position - colliderOffset + Vector3.down * groundLength);
+      //  Gizmos.DrawLine(transform.position - colliderOffset, transform.position - colliderOffset + Vector3.down * groundLength);
     }
 
     public bool canAttack()
