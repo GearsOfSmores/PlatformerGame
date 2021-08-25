@@ -8,6 +8,10 @@ public class PlayerMovement : MonoBehaviour
     public float moveSpeed = 10f;
     public Vector2 direction;
     private bool facingRight = true;
+    private float slideTimer;
+    private float slideDelay = 0.25f;
+    private Vector2 rollDir;
+
 
     [Header("Vertical Movement")]
     public float jumpSpeed = 15f;
@@ -21,6 +25,8 @@ public class PlayerMovement : MonoBehaviour
     public GameObject characterHolder;
     public BoxCollider2D regularColli;
     public BoxCollider2D slideColli;
+    private SpriteRenderer spriteRend;
+    private State state;
 
     [Header("Physics")]
     public float maxSpeed = 7f;
@@ -29,23 +35,40 @@ public class PlayerMovement : MonoBehaviour
     public float fallMultiplier = 5f;
     public float slideSpeed = 5f;
     public bool isSliding = false;
+    public float slideDrag = 0f;
+    public float decreaseSlide = 0f;
+    private float rollSpeed;
+    public float rollSpeedNum = 50f;
+    public bool isRolling = false;
 
     [Header("Collision")]
     public bool onGround = false;
     public float groundLength = 0.6f;
     public Vector3 colliderOffset;
+    
 
-    private SpriteRenderer spriteRend;
-    // Update is called once per frame
+    
+    private enum State
+    {
+        Normal,
+        Rolling,
+    }
 
     
     private void Awake()
     {
         spriteRend = GetComponent<SpriteRenderer>();
+        state = State.Normal;
     }
     void Update()
     {
-        bool wasOnGround = onGround;
+
+        switch (state)
+        {
+
+            case State.Normal:
+
+                bool wasOnGround = onGround;
         onGround = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer); ///|| Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
 
         if (!wasOnGround && onGround)
@@ -58,30 +81,102 @@ public class PlayerMovement : MonoBehaviour
             jumpTimer = Time.time + jumpDelay;
         }
 
-        direction = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetButtonDown("Jump") && isSliding == true)
         {
-            preformSlide();
+            animator.SetBool("slide", false);
+
         }
+                animator.SetBool("roll", false);
+
+                direction = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+        if (Input.GetButtonDown("Roll"))
+             { rollDir = direction;
+                    rollSpeed = rollSpeedNum;
+                    state = State.Rolling;
+                }
+                
+          break;
+
+          case State.Rolling:
+            float rollSpeedDropMultiplier = 6f;
+                rb.drag = 8f;
+            rollSpeed -= rollSpeed * rollSpeedDropMultiplier * Time.deltaTime;
+                animator.SetBool("roll", true);
+                
+
+            float rollSpeedMinium = 10f;
+             if (rollSpeed < rollSpeedMinium)
+              {
+                state = State.Normal;
+                    animator.SetBool("roll", false);
+                }
+          break;
+               
+        }
+
+       
+
+
+        if (Input.GetButtonDown("Slide") & isSliding==false)
+        {
+            slideTimer = Time.time + slideDelay;
+        }
+
+       
+   
     }
     void FixedUpdate()
     {
-        moveCharacter(direction.x);
-        if (jumpTimer > Time.time && onGround)
+        switch (state)
         {
-            Jump();
-        }
+            case State.Normal:
 
-        modifyPhysics();
+                if (slideTimer > Time.time && onGround)
+                {
+                    preformSlide();
+                }
+                moveCharacter(direction.x);
+                if (jumpTimer > Time.time && onGround)
+                {
+                    Jump();
+                }
+
+                modifyPhysics();
+
+                break;
+            case State.Rolling:
+                rb.velocity = rollDir * rollSpeed;
+                break;
+        }
+        
+
+       
     }
     public void preformSlide()
     {
         isSliding = true;
         animator.SetBool("slide", true);
-       // regularColli.enabled = false;
-       // slideColli.enabled = true;
+
+
+
+        if (facingRight)
+        {
+            rb.AddForce(Vector2.right * slideSpeed);
+        }
+        else
+        {
+            rb.AddForce(Vector2.left * slideSpeed);
+        }
+      
+            
         
+           
+        
+       
+        // regularColli.enabled = false;
+        // slideColli.enabled = true;
+
         StartCoroutine("stopSlide");
         
     }
@@ -93,15 +188,16 @@ public class PlayerMovement : MonoBehaviour
         {
             Flip();
         }
-        if (Mathf.Abs(rb.velocity.x) > maxSpeed)
-        {
+        if (Mathf.Abs(rb.velocity.x) > maxSpeed && isSliding == false)
+       {
             rb.velocity = new Vector2(Mathf.Sign(rb.velocity.x) * maxSpeed, rb.velocity.y);
-        }
+       }
         animator.SetFloat("horizontal", Mathf.Abs(rb.velocity.x));
         animator.SetFloat("vertical", rb.velocity.y);
     }
     void Jump()
     {
+        //rb.velocity = new Vector2(rb.velocity.x,jumpSpeed);
         rb.velocity = new Vector2(rb.velocity.x, 0);
         rb.AddForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
         
@@ -114,16 +210,29 @@ public class PlayerMovement : MonoBehaviour
 
         if (onGround)
         {
+
             if (Mathf.Abs(direction.x) < 0.4f || changingDirections)
             {
                 rb.drag = linearDrag;
             }
+            
+            else if(isSliding == true)
+            {
+                rb.drag = 2f;
+            }
+            else if (isRolling == true)
+            {
+                rb.drag = 5f;
+            }
             else
             {
-                rb.drag = 0f;
+                rb.drag = 0;
             }
+          
             rb.gravityScale = 0;
-        }
+
+       }
+
         else
         {
             rb.gravityScale = gravity;
@@ -138,6 +247,7 @@ public class PlayerMovement : MonoBehaviour
             }
         }
     }
+    
     void Flip()
     {
         facingRight = !facingRight;
@@ -146,23 +256,21 @@ public class PlayerMovement : MonoBehaviour
 
     IEnumerator stopSlide()
     {
-        if (Input.GetButton("Jump"))
-        {
-            animator.SetBool("slide", false);
-            isSliding = false;
-        }
-        else
-        {
+        
+            
 
-            yield return new WaitForSeconds(0.8f);
-            animator.Play("Idle");
+        
+        
+            
+            yield return new WaitForSeconds(.8f);
+            
             animator.SetBool("slide", false);
             // regularColli.enabled = true;
             // slideColli.enabled = false;
             isSliding = false;
-        }
-         
+        
 
+        
 
     }
     IEnumerator JumpSqueeze(float xSqueeze, float ySqueeze, float seconds)
