@@ -11,12 +11,11 @@ GameObject:
   - component: {fileID: 4280671545179079384}
   - component: {fileID: 4280671545179079385}
   - component: {fileID: 4280671545179079383}
-  - component: {fileID: 4280671545179079387}
+  - component: {fileID: 4280671545179079391}
   - component: {fileID: 4280671545179079386}
   - component: {fileID: 4280671545179079382}
   - component: {fileID: 4280671545179079389}
   - component: {fileID: 4280671545179079388}
-  - component: {fileID: 4280671545179079391}
   m_Layer: 9
   m_Name: Player
   m_TagString: Player
@@ -75,8 +74,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 2076396013
-  m_SortingLayer: 3
+  m_SortingLayerID: 23302083
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: ec6024434cc0c7f4eb61be20590aef7f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -110,7 +109,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!114 &4280671545179079387
+--- !u!114 &4280671545179079391
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -119,15 +118,35 @@ MonoBehaviour:
   m_GameObject: {fileID: 4280671545179079380}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6806b2c81f28f044e8a678d9c49e4177, type: 3}
+  m_Script: {fileID: 11500000, guid: 8c830559e18b0004a8b3dfaa07c4dca4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 7.5
-  jumpHeight: 11.4
+  moveSpeed: 10
+  direction: {x: 0, y: 0}
+  facingRight: 1
+  slideSpeed: 5
+  isSliding: 0
+  rollSlideSpeed: 0
+  isRolling: 0
+  jumpSpeed: 15
+  jumpDelay: 0.25
+  rb: {fileID: 4280671545179079383}
+  animator: {fileID: 4280671545179079386}
   groundLayer:
     serializedVersion: 2
     m_Bits: 256
-  JumpHoldTime: 0.1
+  characterHolder: {fileID: 0}
+  regularColli: {fileID: 0}
+  slideColli: {fileID: 0}
+  maxSpeed: 7
+  linearDrag: 4
+  gravity: 1
+  fallMultiplier: 5
+  slideDrag: 0
+  decreaseSlide: 0
+  onGround: 0
+  groundLength: 0.6
+  colliderOffset: {x: 0, y: -0.69, z: 0}
 --- !u!95 &4280671545179079386
 Animator:
   serializedVersion: 3
@@ -213,18 +232,6 @@ MonoBehaviour:
   startingHealth: 3
   IframesDuration: 1
   numberOfFlashes: 3
---- !u!114 &4280671545179079391
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4280671545179079380}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c830559e18b0004a8b3dfaa07c4dca4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &4280671545429419909
 GameObject:
   m_ObjectHideFlags: 0
