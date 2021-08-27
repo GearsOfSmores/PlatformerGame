@@ -25,7 +25,10 @@ public class PlayerMovement : MonoBehaviour
     [Header("Vertical Movement")]
     public float jumpSpeed = 15f;
     public float jumpDelay = 0.25f;
+    public float doubleJumpSpeed = 15f;
     private float jumpTimer;
+    private bool canDoubleJump;
+    private bool canJump;
 
     [Header("Components")]
     public Rigidbody2D rb;
@@ -59,12 +62,53 @@ public class PlayerMovement : MonoBehaviour
     }
     void Update()
     {
-     
+        if (onGround)
+        {
+            canDoubleJump = true;
+            canJump = true;
+        }
+
+
+
         HandleMovenment();
         HandleSlide();
         HandleDodgeRoll();
+        if (Input.GetButtonDown("Jump"))
+        {
+           // jumpTimer = Time.time + jumpDelay;
+           // if (jumpTimer > jumpDelay)
+           // {
+                if (onGround)
+                {
+                animator.SetBool("jump", true);
+                      
+                    rb.velocity = new Vector2(rb.velocity.x, 0);
+                    rb.AddForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
+                    //jumpTimer = 0;
+                    StartCoroutine(JumpSqueeze(0.5f, 1.2f, 0.1f));
+                    canJump = false;
+            }
+                else
+                {
+                    if (Input.GetButtonDown("Jump") &&!onGround)
+                    {
+                        if (canDoubleJump)
+                        {
+                        animator.SetBool("jump", false);
+                        animator.SetBool("doublejump", true);
+                            
+                            
+                            rb.velocity = new Vector2(rb.velocity.x, 0);
+                            rb.AddForce(Vector2.up * doubleJumpSpeed, ForceMode2D.Impulse);
+                            canDoubleJump = false;
+                        }
+                    }
+                    
+                //}
+            }
 
-       
+        }
+
     }
    
     void FixedUpdate()
@@ -76,7 +120,7 @@ public class PlayerMovement : MonoBehaviour
            // preformSlide();
          }
       
-        if (jumpTimer > Time.time && onGround)
+        if (jumpTimer > Time.time)
          {
             Jump();
          }
@@ -96,9 +140,27 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(JumpSqueeze(1.25f, 0.8f, 0.05f));
         }
 
-        if (Input.GetButtonDown("Jump"))
+        if(Input.GetButtonDown("Jump") && canDoubleJump == true && !onGround)
         {
-            jumpTimer = Time.time + jumpDelay;
+           
+
+            animator.SetBool("doublejump", true);
+
+        }
+        if (Input.GetButtonDown("Jump") &&  canDoubleJump == true && !onGround && direction.y <0 )
+        {
+            animator.SetBool("doublejump", true);
+
+        }
+        if (Input.GetButtonDown("Jump") && canDoubleJump == true && onGround)
+        {
+            animator.SetBool("doublejump", false);
+
+        }
+        if (canDoubleJump == false && !onGround)
+        {
+            animator.SetBool("doublejump", false);
+
         }
 
         if (Input.GetButtonDown("Jump") && isSliding == true)
@@ -125,7 +187,7 @@ public class PlayerMovement : MonoBehaviour
             
 
         }
-
+        
 
 
     }
@@ -196,6 +258,22 @@ public class PlayerMovement : MonoBehaviour
     void moveCharacter(float horizontal)
     {
         rb.AddForce(Vector2.right * horizontal * moveSpeed);
+        if(onGround)
+        {
+            if(horizontal >.5 || horizontal < .5)
+            {
+                animator.SetBool("run", true);
+            }
+
+        }
+        if (!onGround)
+        {
+            if (horizontal > .5 || horizontal < .5)
+            {
+                animator.SetBool("run", false);
+            }
+
+        }
 
         if ((horizontal > 0 && !facingRight) || (horizontal < 0 && facingRight))
         {
@@ -210,12 +288,11 @@ public class PlayerMovement : MonoBehaviour
     }
     void Jump()
     {
+        
         //rb.velocity = new Vector2(rb.velocity.x,jumpSpeed);
-        rb.velocity = new Vector2(rb.velocity.x, 0);
-        rb.AddForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
-
-        jumpTimer = 0;
-        StartCoroutine(JumpSqueeze(0.5f, 1.2f, 0.1f));
+    
+        
+        
     }
     void modifyPhysics()
     {
@@ -255,9 +332,21 @@ public class PlayerMovement : MonoBehaviour
             {
                 rb.gravityScale = gravity * fallMultiplier;
             }
-            else if (rb.velocity.y > 0 && !Input.GetButton("Jump"))
+            else if (rb.velocity.y > 0 && Input.GetButton("Jump") && canDoubleJump == true)
             {
-                rb.gravityScale = gravity * (fallMultiplier / 2);
+                rb.gravityScale = gravity * (fallMultiplier);
+            }
+            else if(rb.velocity.y > 0 && !Input.GetButton("Jump") && canDoubleJump == true)
+            {
+                rb.gravityScale = gravity * (fallMultiplier);
+            }
+            else if (rb.velocity.y > 0 && !Input.GetButton("Jump") && canDoubleJump == false)
+            {
+                rb.gravityScale = gravity * (fallMultiplier);
+            }
+            else if (rb.velocity.y > 0 && Input.GetButton("Jump") && canDoubleJump == false)
+            {
+                rb.gravityScale = gravity * (fallMultiplier);
             }
         }
     }

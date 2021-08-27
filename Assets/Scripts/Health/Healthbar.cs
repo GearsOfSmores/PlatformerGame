@@ -8,15 +8,30 @@ public class Healthbar : MonoBehaviour
     [SerializeField] private Health playerHealth;
     [SerializeField] private Image currenthealthBar;
     [SerializeField] private Image totalhealthBar;
+    [SerializeField] private Color Low;
+    [SerializeField] private Color High;
+    private float health;
+    [SerializeField] public Text healthText;
 
     private void Start()
     {
-        totalhealthBar.fillAmount = playerHealth.currentHealth / 10;
+
+        
+        currenthealthBar.fillAmount = playerHealth.currentHealth/200f;
+       //totalhealthBar.fillAmount = playerHealth.currentHealth;
+        //playerHealth.currentHealth = health;
+       
     }
 
     private void Update()
     {
-        currenthealthBar.fillAmount = playerHealth.currentHealth / 10;
-    }
+        
+        
+        currenthealthBar.fillAmount = playerHealth.currentHealth/200f;
+   }
 
+    public void Setup (float health)
+    {
+        healthText.text = health.ToString() + " / 200";
+    }
 }
