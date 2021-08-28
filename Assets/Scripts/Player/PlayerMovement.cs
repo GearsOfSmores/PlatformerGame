@@ -140,11 +140,17 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(JumpSqueeze(1.25f, 0.8f, 0.05f));
         }
 
-        if(Input.GetButtonDown("Jump") && canDoubleJump == true && !onGround)
+        if(onGround == true && direction.x < .5f)
+        {
+            animator.SetBool("idle", true);
+        }
+
+        if(Input.GetButtonDown("Jump") && canDoubleJump == true && onGround == false)
         {
            
 
             animator.SetBool("doublejump", true);
+            animator.SetBool("Jump", false);
 
         }
         if (Input.GetButtonDown("Jump") &&  canDoubleJump == true && !onGround && direction.y <0 )
