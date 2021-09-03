@@ -29,6 +29,12 @@ public class PlayerMovement : MonoBehaviour
     private float jumpTimer;
     private bool canDoubleJump;
     private bool canJump;
+    public bool OnRightWall;
+    public bool OnLeftWall;
+    private int wallSlide;
+    private bool wallJump;
+    public bool grabWall;
+    public bool OnWall;
 
     [Header("Components")]
     public Rigidbody2D rb;
@@ -52,7 +58,11 @@ public class PlayerMovement : MonoBehaviour
     [Header("Collision")]
     public bool onGround = false;
     public float groundLength = 0.6f;
+    
     public Vector3 colliderOffset;
+    public Vector3 leftOffset;
+    public Vector3 rightOffset;
+    public float wallLength = 0.4f;
 
 
 
@@ -68,11 +78,12 @@ public class PlayerMovement : MonoBehaviour
             canJump = true;
         }
 
-
+       
 
         HandleMovenment();
         HandleSlide();
         HandleDodgeRoll();
+        HandleWallJump();
         if (Input.GetButtonDown("Jump"))
         {
            // jumpTimer = Time.time + jumpDelay;
@@ -113,7 +124,19 @@ public class PlayerMovement : MonoBehaviour
    
     void FixedUpdate()
     {
-       
+
+        if (Input.GetButton("Grab") && OnWall == true )
+        {
+            grabWall = true;
+
+            rb.velocity = new Vector2(rb.velocity.x, 0);
+        }
+        else if (Input.GetButtonUp("Grab") && OnWall == false)
+        {
+            grabWall = false;
+
+        }
+
 
         if (slideTimer > Time.time && onGround)
          {
@@ -126,20 +149,24 @@ public class PlayerMovement : MonoBehaviour
          }
         moveCharacter(direction.x);
         modifyPhysics();
-        
 
-
+      
     }
     private void HandleMovenment()
     {
         bool wasOnGround = onGround;
         onGround = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer); ///|| Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
+        OnWall = Physics2D.Raycast(transform.position + rightOffset, Vector2.right, wallLength, groundLayer) || 
+            Physics2D.Raycast(transform.position + leftOffset, Vector2.left, wallLength, groundLayer);
+        OnRightWall = Physics2D.Raycast(transform.position + rightOffset, Vector2.right, wallLength, groundLayer);
+        OnLeftWall = Physics2D.Raycast(transform.position + leftOffset, Vector2.left, wallLength, groundLayer);
         direction = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         if (!wasOnGround && onGround)
         {
             StartCoroutine(JumpSqueeze(1.25f, 0.8f, 0.05f));
         }
 
+        
         if(onGround == true && direction.x < .5f)
         {
             animator.SetBool("idle", true);
@@ -196,6 +223,46 @@ public class PlayerMovement : MonoBehaviour
         
 
 
+    }
+
+    private void HandleWallJump()
+    {
+       
+        
+        
+        if(OnLeftWall == true || OnRightWall == true && onGround == false)
+        {
+            wallJump = true;
+            animator.SetBool("WallGrab", true);
+          
+
+            if (Input.GetButtonDown("Jump")&& OnRightWall)
+            {
+                rb.velocity = new Vector2(-100f, jumpSpeed);
+
+                transform.Rotate(0, 180, 0);
+
+            }
+          
+            else if (Input.GetButtonDown("Jump") && OnLeftWall)
+            {
+                rb.velocity = new Vector2(100f, jumpSpeed);
+
+                transform.Rotate(0, 180, 0);
+            }
+           
+        }
+        else if(OnRightWall == false || OnLeftWall == false && onGround == false)
+        {
+            animator.SetBool("WallGrab", false);
+        }
+       else if(wallJump == true && onGround == true)
+        {
+            animator.SetBool("WallGrab", false);
+        }
+        
+        
+        
     }
 
         private void HandleDodgeRoll()
@@ -354,6 +421,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 rb.gravityScale = gravity * (fallMultiplier);
             }
+            
         }
     }
 
@@ -416,6 +484,9 @@ public class PlayerMovement : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawLine(transform.position + colliderOffset, transform.position + colliderOffset + Vector3.down * groundLength);
         //  Gizmos.DrawLine(transform.position - colliderOffset, transform.position - colliderOffset + Vector3.down * groundLength);
+       
+        Gizmos.DrawLine(transform.position + rightOffset, transform.position + rightOffset + Vector3.right * wallLength);
+        Gizmos.DrawLine(transform.position + leftOffset, transform.position + leftOffset + Vector3.left * wallLength);
     }
 
     public bool canAttack()
